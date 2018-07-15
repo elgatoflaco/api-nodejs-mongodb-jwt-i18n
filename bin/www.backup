@@ -1,0 +1,250 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+var app = require('../app');
+var debug = require('debug')('node:server');
+var http = require('http');
+var fs = require('fs');
+var Tickets = require('../models/tickets');
+var Slide = require('../models/slide');
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || '80');
+app.set('port', port);
+
+// Variables tickets
+var counter = 0;
+var counter_ticket = 0;
+var counter_number = 0;
+var msg_pasar = {
+  contador: 0,
+  mostrador: '1'
+};
+
+// Impresora
+var printer = require("node-thermal-printer");
+printer.init({
+  type: 'start',
+  interface: '/dev/usb/lp0'
+});
+
+
+/**
+ * Create HTTP server.
+ */
+
+var server = http.createServer(app);
+var io = require('socket.io')(server);
+
+
+io.sockets.on('connection', (socket) => {
+  console.log('Usuario conectacto :)')
+  //Pasar turno
+  socket.on('send message', (data) => {
+    console.log(data)
+    counter++;
+    if (counter>= 101) {
+      counter = 1;
+    }
+
+    if (data.contador !='') {
+      io.sockets.emit('new message', data);
+      socket.broadcast.emit('new message', data);
+      counter = data.contador;
+    }else{
+      msg_pasar.contador = counter;
+      msg_pasar.mostrador = data.mostrador;
+      io.sockets.emit('new message', msg_pasar);
+      socket.broadcast.emit('new message', msg_pasar);
+    }
+
+    fs.writeFile('counter.txt', counter, (err) => {
+        if(err) throw err;
+        console.log("escribiendo turno actual");
+    });
+
+  });
+
+  //imprimir ticket
+  socket.on('enviar ticket', (data_t)=> {
+    counter_ticket++;
+    if (counter_ticket>= 101) {
+      counter_ticket = 1;
+    }
+
+    if (data_t !='') {
+      io.sockets.emit('nuevo ticket', data_t);
+      socket.broadcast.emit('nuevo ticket', data_t);
+      counter_ticket = data_t;
+    }else{
+
+      io.sockets.emit('nuevo ticket', counter_ticket);
+      socket.broadcast.emit('nuevo ticket', counter_ticket);
+    }
+
+    Slide.find((err, data) => {
+      console.log(data[0].name)
+    });
+
+    //Imprimir ticket en la impresora
+    printer.beep();
+    printer.alignCenter();
+    printer.newLine();
+    printer.printImage('./public/img/logo.png', (done) => {
+      printer.newLine();
+      printer.newLine();
+      printer.println("Su turno es el:");
+      printer.setTextDoubleHeight();
+      printer.setTextDoubleWidth();
+      printer.setTextQuadArea()
+      printer.bold(true);
+      printer.println(counter_ticket);
+      printer.newLine();
+      printer.newLine();
+      printer.setTextNormal();
+      printer.println("Farmacia de Zahara de los Atunes");
+      printer.cut();
+      printer.execute(function(err){
+        if (err) {
+          console.error("La impresión ha fallado", err);
+        } else {
+         console.log("Impresión OK!!");
+        }
+      });
+    });
+
+
+    fs.writeFile('counter_ticket.txt', counter_ticket, (err) => {
+        if(err) throw err;
+        console.log("escribiendo ticket impreso");
+    });
+
+    console.log(data_t);
+    console.log(counter_ticket);
+
+
+  });
+
+
+
+
+
+  // No dejar pasar turno si no se ha impreso el número del ticket.
+  // Antes usaba setinterval, ahora los controlo desde aquí, desde los sockets, que es lo más lógico.
+
+  if(counter_ticket>counter || (counter_ticket < 30 && counter === 100)){
+    // console.log('Activar botón!!!!!!')
+    io.sockets.emit('boton', '1');
+    socket.broadcast.emit('boton', '1');
+  }else{
+    // console.log('Desactivar botón!!!!!')
+    io.sockets.emit('boton', '0');
+    socket.broadcast.emit('boton', '0');
+  }
+
+  //cuando se pasa de turno
+  socket.on('send message', ()=>{
+    if(counter_ticket>counter || (counter_ticket < 30 && counter === 100)){
+      // console.log('Activar botón!!!!!!')
+      io.sockets.emit('boton', '1');
+      socket.broadcast.emit('boton', '1');
+    }else{
+      // console.log('Desactivar botón!!!!!')
+      io.sockets.emit('boton', '0');
+      socket.broadcast.emit('boton', '0');
+    }
+
+  })
+  //cuando se imprime ticket imprimir ticket
+  socket.on('enviar ticket', ()=>{
+    if(counter_ticket>counter || (counter_ticket < 30 && counter === 100)){
+      // console.log('Activar botón!!!!!!')
+      io.sockets.emit('boton', '1');
+      socket.broadcast.emit('boton', '1');
+    }else{
+      // console.log('Desactivar botón!!!!!')
+      io.sockets.emit('boton', '0');
+      socket.broadcast.emit('boton', '0');
+    }
+
+  })
+
+
+
+
+
+});
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + '192.168.0.200'
+    // ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}
