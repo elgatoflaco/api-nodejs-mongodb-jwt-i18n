@@ -16,11 +16,15 @@ function signUp (req, res) {
     if (err) {
       console.log(err)
       res.status(500).send({message: `Error al crear el usuario: ${err}`})
+    }else{
+      console.log(user)
+      return res.status(200).send({ token: service.createToken(user) })
     }
-    console.log(user)
-    return res.status(200).send({ token: service.createToken(user) })
   })
 }
+
+
+
 
 // function signIn (req, res) {
 //   User.findOne({ 'email': req.body.email }, (err, user) => {
@@ -42,14 +46,17 @@ function signIn (req, res) {
 
     user.comparePassword(req.body.password, (error, isMatch) => {
       console.log(error)
-      if (!isMatch) return res.status(401).send( { message: 'Las credenciales no coinciden' } )
-
-      req.user = user
-      return res.status(200).send( { message: 'Te has logueado correctamente', token: service.createToken(user), user } )
+      if (!isMatch) {
+        return res.status(401).send( { message: 'Las credenciales no coinciden' } )
+      }else{
+        req.user = user
+        return res.status(200).send( { message: 'Te has logueado correctamente', token: service.createToken(user), user } )
+      }
     })
 
   })
 }
+
 
 // Generates hash using bCrypt
 // var createHash = function (password) {
