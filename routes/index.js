@@ -4,19 +4,19 @@ var router = express.Router()
 // connect to our database
 
 var isAuthenticated = function (req, res, next) {
-	// if user is authenticated in the session, call the next() to call the next request handler
-	// Passport adds this method to request object. A middleware is allowed to add properties to
-	// request and response objects
+  // if user is authenticated in the session, call the next() to call the next request handler
+  // Passport adds this method to request object. A middleware is allowed to add properties to
+  // request and response objects
   if (req.isAuthenticated()) { return next() }
-	// if the user is not authenticated then redirect him to the login page
+  // if the user is not authenticated then redirect him to the login page
   res.redirect('/')
 }
 
 module.exports = function (passport) {
-  var pagesController = require('../controllers/pagesController.js')
-  
-  var passport = require('passport')
-  var flash = require('connect-flash')
+  // var pagesController = require('../controllers/pagesController.js')
+
+  // var passport = require('passport')
+  // var flash = require('connect-flash')
   const userCtrl = require('../controllers/userController')
   const auth = require('../middleware/auth')
 
@@ -48,15 +48,15 @@ module.exports = function (passport) {
 // =====================================
 
   router.get('/', function (req, res) {
-	// res.setLocale(req.cookies.i18n);
+  // res.setLocale(req.cookies.i18n);
     // console.log(res)
-		// Display the Login page with any flash message, if any
+    // Display the Login page with any flash message, if any
     res.render('index', { i18n: res })
   })
 // router.get('/', pagesController.index);//route add customer, get n post
 /* GET login page. */
   router.get('/login', function (req, res) {
-    	// Display the Login page with any flash message, if any
+    // Display the Login page with any flash message, if any
     res.render('login', { message: req.flash('message') })
   })
 
@@ -81,8 +81,8 @@ module.exports = function (passport) {
 
 /* Logout */
   router.get('/logout', function (req, res) {
-	  req.logout()
-	  res.redirect('/') // Can fire before session is destroyed?
+    req.logout()
+    res.redirect('/') // Can fire before session is destroyed?
   })
 
 /* GET Home Page */
@@ -91,7 +91,7 @@ module.exports = function (passport) {
   })
 
 // router.get('/home', isAuthenticated, function(req, res){
-// 	res.render('home', { user: req.user, page_title: 'Home' });
+//  res.render('home', { user: req.user, page_title: 'Home' });
 // });
 
 /* Handle Logout */

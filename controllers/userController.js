@@ -16,47 +16,29 @@ function signUp (req, res) {
     if (err) {
       console.log(err)
       res.status(500).send({message: `Error al crear el usuario: ${err}`})
-    }else{
+    } else {
       console.log(user)
       return res.status(200).send({ token: service.createToken(user) })
     }
   })
 }
 
-
-
-
-// function signIn (req, res) {
-//   User.findOne({ 'email': req.body.email }, (err, user) => {
-//     if (err) return res.status(500).send({ message: err })
-//     if (!user) return res.status(404).send({ message: 'No existe el usuario'})
-//     req.user = user
-//     res.status(200).send({
-//       message: 'Te has logeado corréctamente',
-//       token: service.createToken(user)
-//     })
-//   })
-// }
-
 function signIn (req, res) {
-  User.findOne( { email: req.body.email }, (err, user) => {
-
+  User.findOne({ email: req.body.email }, (err, user) => {
     if (err) return res.status(500).send({ message: err })
-    if (!user) return res.status(404).send({ message: 'No existe el usuario'})
+    if (!user) return res.status(404).send({message: 'No existe el usuario'})
 
     user.comparePassword(req.body.password, (error, isMatch) => {
       console.log(error)
       if (!isMatch) {
-        return res.status(401).send( { message: 'Las credenciales no coinciden' } )
-      }else{
+        return res.status(401).send({ message: 'Las credenciales no coinciden' })
+      } else {
         req.user = user
-        return res.status(200).send( { message: 'Te has logueado correctamente', token: service.createToken(user), user } )
+        return res.status(200).send({ message: 'Te has logueado correctamente', token: service.createToken(user), user })
       }
     })
-
   })
 }
-
 
 // Generates hash using bCrypt
 // var createHash = function (password) {

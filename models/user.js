@@ -17,8 +17,7 @@ const UserSchema = new Schema({
 
 UserSchema.pre('save', function (next) {
   let user = this
-  //if (!user.isModified('password')) return next()
-
+  // if (!user.isModified('password')) return next()
   bcrypt.genSalt(10, (err, salt) => {
     if (err) return next(err)
 
@@ -38,11 +37,11 @@ UserSchema.methods.gravatar = function () {
   return `https://gravatar.com/avatar/${md5}?s=200&d=retro`
 }
 
-UserSchema.methods.comparePassword = function(candidatePassword, cb) {
-    bcrypt.compare(candidatePassword, this.password, function(err, isMatch) {
-        if (err) return cb(err);
-        cb(null, isMatch);
-    });
-};
+UserSchema.methods.comparePassword = function (candidatePassword, cb) {
+  bcrypt.compare(candidatePassword, this.password, function (err, isMatch) {
+    if (err) return cb(err)
+    cb(null, isMatch)
+  })
+}
 
 module.exports = mongoose.model('User', UserSchema)
