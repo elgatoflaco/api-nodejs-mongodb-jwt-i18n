@@ -7,9 +7,8 @@
 ## Rutas de acceso
 METHOD | ENDPOINT | USAGE
 --- | --- | ---
-*Still* | `renders` | **nicely**
-POST | /api/signup | jwt sign up
-POST | /api/signin | jwt sign in
+POST | `/api/signup` | jwt sign up
+POST | `/api/signin` | jwt sign in
 
 
 ## Scripts disponibles
