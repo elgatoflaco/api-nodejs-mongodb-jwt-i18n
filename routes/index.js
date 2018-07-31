@@ -35,8 +35,10 @@ module.exports = function (passport) {
   router.post('/api/signin', userCtrl.signIn)
 
   router.get('/api/private', auth, (req, res) => {
-    res.status(200).send({ message: 'Tienes acceso' })
+    res.status(200).send({ message: 'Allowed' , user: req.user})
   })
+
+  router.get('/api/user/:_id', auth, userCtrl.getUser);
 
   router.get('/signin', function (req, res) {
 		// Display the Login page with any flash message, if any
