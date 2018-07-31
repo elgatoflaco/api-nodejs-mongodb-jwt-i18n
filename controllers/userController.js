@@ -15,7 +15,7 @@ function signUp (req, res) {
   user.save((err) => {
     if (err) {
       console.log(err)
-      res.status(500).send({message: `Error al crear el usuario: ${err}`})
+      res.status(500).send({message: `Error accessing database: ${err}`})
     } else {
       console.log(user)
       return res.status(200).send({ token: service.createToken(user) })
@@ -26,18 +26,31 @@ function signUp (req, res) {
 function signIn (req, res) {
   User.findOne({ email: req.body.email }, (err, user) => {
     if (err) return res.status(500).send({ message: err })
-    if (!user) return res.status(404).send({message: 'No existe el usuario'})
+    if (!user) return res.status(404).send({message: 'User not found!'})
 
     user.comparePassword(req.body.password, (error, isMatch) => {
       console.log(error)
       if (!isMatch) {
-        return res.status(401).send({ message: 'Las credenciales no coinciden' })
+        return res.status(401).send({ message: 'Wrong credentials!' })
       } else {
         req.user = user
-        return res.status(200).send({ message: 'Te has logueado correctamente', token: service.createToken(user), user })
+        return res.status(200).send({ message: 'Logged in!', token: service.createToken(user), user })
       }
     })
   })
+}
+
+function getUser(req, res) {
+	User.findOne({ _id: req.params._id }, (err, user) => {
+		if (err) return res.status(500).send({ message: err });
+    if (!user) return res.status(404).send({ message: "User not found!" });
+    return res
+					.status(200)
+					.send({
+						message: "Allowed",
+						user
+					});
+	});
 }
 
 // Generates hash using bCrypt
@@ -47,5 +60,6 @@ function signIn (req, res) {
 
 module.exports = {
   signUp,
-  signIn
+  signIn,
+  getUser
 }

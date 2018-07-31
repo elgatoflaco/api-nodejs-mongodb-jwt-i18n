@@ -38,6 +38,8 @@ module.exports = function (passport) {
     res.status(200).send({ message: 'Tienes acceso' })
   })
 
+  router.get('/api/user/:_id', auth, userCtrl.getUser);
+
   router.get('/signin', function (req, res) {
 		// Display the Login page with any flash message, if any
     res.render('api/signin', { message: req.flash('message') })
